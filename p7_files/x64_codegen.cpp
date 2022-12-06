@@ -8,35 +8,38 @@ void IRProgram::allocGlobals(){
     for(auto g : globals){
         SymOpd * globalOpd = g.second;
         std::string memLoc = "gbl_" ;
-        const SemSymbol * globalOpd->getSym();
+        const SemSymbol * sym = globalOpd->getSym();
         memLoc += sym->getName();
         globalOpd->setMemoryLoc("(" + memLoc + ")");
-    }
-	for(auto s : strings){
-        TODO(Implement me)
     }
 }
 
 void IRProgram::datagenX64(std::ostream& out){
 	
     out << ".data\n";
-    out << ".globl main\n"
+    out << ".globl main\n";
     for(auto g : globals){
         SymOpd * globalOpd = g.second;
         std::string memLoc = "gbl_" ;
-        const SemSymbol * globalOpd->getSym();
+        const SemSymbol * sym = globalOpd->getSym();
         memLoc += sym->getName();
         size_t width = sym->getDataType()->getSize();
-        out << memLoc << ":";
-        if(width == 8){
-            out << ".quad 0\n";
-        } else {
-            out << ".space" << width << "\n";
+        if(width != 0) {
+            out << memLoc << ":";
         }
+        if(width == 8){
+            out << " .quad 0\n";
+
+        } 
     }
-    //Put this directive after you write out strings
-	// so that everything is aligned to a quadword value
-	// again
+
+    int count =strings.size()-1;
+    for (auto s: strings) {
+        std::string stringVal = s.second;
+        std::string memloc = "str_" + to_string(count);
+        out << memloc << ": .asciz " << stringVal << "\n";
+        count--;
+    }
 	out << ".align 8\n";
 
 }
@@ -45,7 +48,7 @@ void IRProgram::toX64(std::ostream& out){
 	allocGlobals();
 	datagenX64(out);
 	// Iterate over each procedure and codegen it
-    out << ".text\n"
+    out << ".text\n";
     for(auto proc : *this->procs){
         proc->toX64(out);
     }
@@ -54,18 +57,28 @@ void IRProgram::toX64(std::ostream& out){
 void Procedure::allocLocals(){
 	//Allocate space for locals
 	// Iterate over each procedure and codegen it
-	for(auto t : *temps ){
-        t->setMemoryLoc();
+    int count = 0;
+	for(auto t : temps ){
+        int offset = 24 + (count*8);
+        t->setMemoryLoc("-" + to_string(offset) + "(%rbp)");
+        count++;
     }
-    for(auto t : *locals){
-
+    for(auto t : locals){
+        SymOpd* sym = t.second;
+        int offset = 24 + (count*8);
+        sym->setMemoryLoc("-" + to_string(offset) + "(%rbp)");
+        count++;
     }
-    for(auto t : *formals ){
-
+    for(auto t : formals ){
+        int offset = 24 + (count*8);
+        t->setMemoryLoc("-" + to_string(offset) + "(%rbp)");
+        count++;
     }
-    for(auto t : *addrOpds ){
-
-    }
+    for(auto t : addrOpds ){
+        int offset = 24 + (count*8);
+        t->setMemoryLoc("-" + to_string(offset) + "(%rbp)");
+        count++;
+    }   
 }
 
 void Procedure::toX64(std::ostream& out){
@@ -127,13 +140,14 @@ void IntrinsicMayhemQuad::codegenX64(std::ostream& out){
 }
 
 void IntrinsicOutputQuad::codegenX64(std::ostream& out){
+	myArg->genLoadVal(out, DI);
 	if (myType->isBool()){
-		myArg->genLoadVal(out, DI);
 		out << "callq printBool\n";
-
+	} else if (myType->isInt()) {
+		out << "callq printInt\n";
 	} else {
-		TODO(Implement me)
-	}
+        out << "callq printString\n";
+    }
 }
 
 void IntrinsicInputQuad::codegenX64(std::ostream& out){
@@ -145,11 +159,17 @@ void CallQuad::codegenX64(std::ostream& out){
 }
 
 void EnterQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+    out << "#Prologue\n";
+	out << "pushq %rbp\nmovq %rsp, %rbp\naddq $16, %rbp\n";
+    int numLoc = myProc->arSize();
+    out << "subq $" << numLoc << ", %rsp\n";
 }
 
 void LeaveQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+    int numLoc = myProc->arSize();
+    out << "addq $" << numLoc << ", %rsp\n";
+    out << "popq %rbp\n";
+    out << "retq\n";
 }
 
 void SetArgQuad::codegenX64(std::ostream& out){
@@ -173,11 +193,12 @@ void LocQuad::codegenX64(std::ostream& out){
 }
 
 void SymOpd::genLoadVal(std::ostream& out, Register reg){
-	TODO(Implement me)
+    //FIX ME: Worry about width of operand later
+    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::reg64(reg) << "\n"; 
 }
 
 void SymOpd::genStoreVal(std::ostream& out, Register reg){
-	TODO(Implement me)
+	out << getMovOp() << " " << RegUtils::reg64(reg) << ", " << this->getMemoryLoc() << "\n";
 }
 
 void SymOpd::genLoadAddr(std::ostream& out, Register reg) {
@@ -185,11 +206,11 @@ void SymOpd::genLoadAddr(std::ostream& out, Register reg) {
 }
 
 void AuxOpd::genLoadVal(std::ostream& out, Register reg){
-	TODO(Implement me)
+	out << getMovOp() << this->getMemoryLoc() << ", " << getReg(reg) << "\n"; 
 }
 
 void AuxOpd::genStoreVal(std::ostream& out, Register reg){
-	TODO(Implement me)
+	out << getMovOp() << " " << getReg(reg) << ", " << this->getMemoryLoc() << "\n";
 }
 void AuxOpd::genLoadAddr(std::ostream& out, Register reg){
 	TODO(Implement me)
@@ -202,7 +223,7 @@ void AddrOpd::genStoreVal(std::ostream& out, Register reg){
 
 void AddrOpd::genLoadVal(std::ostream& out, Register reg){
 	//fix me: worry about size of operand
-    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::getreg64(reg) << "\n"; 
+    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::reg64(reg) << "\n"; 
     TODO(Implement me)
 }
 
@@ -215,7 +236,7 @@ void AddrOpd::genLoadAddr(std::ostream & out, Register reg){
 }
 
 void LitOpd::genLoadVal(std::ostream & out, Register reg){
-	out << getMovOp() << " $" << val << ", " << getReg(reg) << "\n";
+	out << getMovOp() << " $" << val << ", " << RegUtils::reg64(reg) << "\n";
 }
 
 }
