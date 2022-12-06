@@ -8,7 +8,7 @@ void IRProgram::allocGlobals(){
     for(auto g : globals){
         SymOpd * globalOpd = g.second;
         std::string memLoc = "gbl_" ;
-        const SemSymbol * globalOpd->getSym();
+        const SemSymbol * sym = globalOpd->getSym();
         memLoc += sym->getName();
         globalOpd->setMemoryLoc("(" + memLoc + ")");
     }
@@ -20,11 +20,11 @@ void IRProgram::allocGlobals(){
 void IRProgram::datagenX64(std::ostream& out){
 	
     out << ".data\n";
-    out << ".globl main\n"
+    out << ".globl main\n";
     for(auto g : globals){
         SymOpd * globalOpd = g.second;
         std::string memLoc = "gbl_" ;
-        const SemSymbol * globalOpd->getSym();
+        const SemSymbol * sym = globalOpd->getSym();
         memLoc += sym->getName();
         size_t width = sym->getDataType()->getSize();
         out << memLoc << ":";
@@ -45,7 +45,7 @@ void IRProgram::toX64(std::ostream& out){
 	allocGlobals();
 	datagenX64(out);
 	// Iterate over each procedure and codegen it
-    out << ".text\n"
+    out << ".text\n";
     for(auto proc : *this->procs){
         proc->toX64(out);
     }
@@ -54,16 +54,16 @@ void IRProgram::toX64(std::ostream& out){
 void Procedure::allocLocals(){
 	//Allocate space for locals
 	// Iterate over each procedure and codegen it
-	for(auto t : *temps ){
-        t->setMemoryLoc();
+	for(auto t : temps ){
+        //t->setMemoryLoc();
     }
-    for(auto t : *locals){
+    for(auto t : locals){
 
     }
-    for(auto t : *formals ){
+    for(auto t : formals ){
 
     }
-    for(auto t : *addrOpds ){
+    for(auto t : addrOpds ){
 
     }
 }
@@ -202,7 +202,7 @@ void AddrOpd::genStoreVal(std::ostream& out, Register reg){
 
 void AddrOpd::genLoadVal(std::ostream& out, Register reg){
 	//fix me: worry about size of operand
-    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::getreg64(reg) << "\n"; 
+    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::reg64(reg) << "\n"; 
     TODO(Implement me)
 }
 
@@ -215,7 +215,7 @@ void AddrOpd::genLoadAddr(std::ostream & out, Register reg){
 }
 
 void LitOpd::genLoadVal(std::ostream & out, Register reg){
-	out << getMovOp() << " $" << val << ", " << getReg(reg) << "\n";
+	out << getMovOp() << " $" << val << ", " << RegUtils::reg64(reg) << "\n";
 }
 
 }
