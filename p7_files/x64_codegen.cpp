@@ -5,12 +5,36 @@ namespace drewgon{
 
 void IRProgram::allocGlobals(){
 	//Choose a label for each global
-	TODO(Implement me)
+    for(auto g : globals){
+        SymOpd * globalOpd = g.second;
+        std::string memLoc = "gbl_" ;
+        const SemSymbol * globalOpd->getSym();
+        memLoc += sym->getName();
+        globalOpd->setMemoryLoc("(" + memLoc + ")");
+    }
+	for(auto s : strings){
+        TODO(Implement me)
+    }
 }
 
 void IRProgram::datagenX64(std::ostream& out){
-	TODO(Write out data section)
-	//Put this directive after you write out strings
+	
+    out << ".data\n";
+    out << ".globl main\n"
+    for(auto g : globals){
+        SymOpd * globalOpd = g.second;
+        std::string memLoc = "gbl_" ;
+        const SemSymbol * globalOpd->getSym();
+        memLoc += sym->getName();
+        size_t width = sym->getDataType()->getSize();
+        out << memLoc << ":";
+        if(width == 8){
+            out << ".quad 0\n";
+        } else {
+            out << ".space" << width << "\n";
+        }
+    }
+    //Put this directive after you write out strings
 	// so that everything is aligned to a quadword value
 	// again
 	out << ".align 8\n";
@@ -21,13 +45,27 @@ void IRProgram::toX64(std::ostream& out){
 	allocGlobals();
 	datagenX64(out);
 	// Iterate over each procedure and codegen it
-	TODO(Implement me)
+    out << ".text\n"
+    for(auto proc : *this->procs){
+        proc->toX64(out);
+    }
 }
 
 void Procedure::allocLocals(){
 	//Allocate space for locals
 	// Iterate over each procedure and codegen it
-	TODO(Implement me)
+	for(auto t : *temps ){
+        t->setMemoryLoc();
+    }
+    for(auto t : *locals){
+
+    }
+    for(auto t : *formals ){
+
+    }
+    for(auto t : *addrOpds ){
+
+    }
 }
 
 void Procedure::toX64(std::ostream& out){
@@ -92,6 +130,7 @@ void IntrinsicOutputQuad::codegenX64(std::ostream& out){
 	if (myType->isBool()){
 		myArg->genLoadVal(out, DI);
 		out << "callq printBool\n";
+
 	} else {
 		TODO(Implement me)
 	}
@@ -162,7 +201,9 @@ void AddrOpd::genStoreVal(std::ostream& out, Register reg){
 }
 
 void AddrOpd::genLoadVal(std::ostream& out, Register reg){
-	TODO(Implement me)
+	//fix me: worry about size of operand
+    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::getreg64(reg) << "\n"; 
+    TODO(Implement me)
 }
 
 void AddrOpd::genStoreAddr(std::ostream& out, Register reg){
