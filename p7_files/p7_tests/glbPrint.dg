@@ -1,4 +1,20 @@
 int a;
-int main() {
+bool b;
+
+void print(int a, bool b) {
     output a;
+    output "\n";
+    output b;
+    output "\n";
+}
+
+int main() {
+    a=1;
+    b=true;
+    output a;
+    output "\n";
+    output b;
+    output "\n";
+    output "Hi there\n";
+    print(a, b);
 }
