@@ -1,6 +1,7 @@
 int a;
 bool b;
 
+
 bool print(int a, bool b, int c, int d, int e, int f) {
     output a;
     output b;
@@ -30,5 +31,4 @@ int main() {
     output "\n";
     may = mayhem;
     output may;
-    output "\n";
 }
