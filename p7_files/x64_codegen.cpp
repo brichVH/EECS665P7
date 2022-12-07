@@ -10,7 +10,11 @@ void IRProgram::allocGlobals(){
         std::string memLoc = "gbl_" ;
         const SemSymbol * sym = globalOpd->getSym();
         memLoc += sym->getName();
-        globalOpd->setMemoryLoc("(" + memLoc + ")");
+        if(sym->getKind() ==  FN) {
+            globalOpd->setMemoryLoc("$" + memLoc);
+        } else {
+            globalOpd->setMemoryLoc("(" + memLoc + ")");
+        }
     }
 }
 
@@ -24,11 +28,11 @@ void IRProgram::datagenX64(std::ostream& out){
         const SemSymbol * sym = globalOpd->getSym();
         memLoc += sym->getName();
         size_t width = sym->getDataType()->getSize();
-        out << memLoc << ":";
+        if(width !=0) {
+            out << memLoc << ":";
+        }
         if(width == 8){
             out << " .quad 0\n";
-        } else {
-            out << " " << sym->getName() << "\n";
         }
     }
 
@@ -64,7 +68,9 @@ void Procedure::allocLocals(){
     }
     for(auto t : locals){
         SymOpd* sym = t.second;
+        SemSymbol* semSym = t.first;
         int offset = 24 + (count*8);
+        semSym->addMemLoc("-" + to_string(offset) + "(%rbp)");
         sym->setMemoryLoc("-" + to_string(offset) + "(%rbp)");
         count++;
     }
@@ -245,7 +251,7 @@ void UnaryOpQuad::codegenX64(std::ostream& out){
 
 void AssignQuad::codegenX64(std::ostream& out){
 	src->genLoadVal(out, A);
-	dst->genStoreVal(out, A);
+    dst->genStoreVal(out, A);
 }
 
 void GotoQuad::codegenX64(std::ostream& out){
@@ -289,7 +295,12 @@ void IntrinsicInputQuad::codegenX64(std::ostream& out){
 }
 
 void CallQuad::codegenX64(std::ostream& out){
-	out << "callq fun_" << callee->getName() << "\n";
+    if(callee->getKind() == VAR) {
+        out <<  "movq " << callee->getMemLoc() << ", %rax\n";
+        out << "callq *%rax\n";
+    } else {
+	    out << "callq gbl_" << callee->getName() << "\n";
+    }
     if(formalSize > 6) {
         for(int i=0; i<formalSize-6; i++) {
             out << "popq %r11\n";
@@ -366,7 +377,6 @@ void SetArgQuad::codegenX64(std::ostream& out){
         } else {
             opd->genStackPush(out);
         }
-        
     }
 }
 
@@ -375,7 +385,7 @@ void GetArgQuad::codegenX64(std::ostream& out){
 }
 
 void SetRetQuad::codegenX64(std::ostream& out){
-	out << "movq " << opd->getMemoryLoc() << ",  %rax\n";
+	opd->genLoadVal(out, A);
 }
 
 void GetRetQuad::codegenX64(std::ostream& out){

@@ -42,9 +42,13 @@ public:
 		}
 		return "UNKNOWN KIND";
 	}
+
+    void addMemLoc(std::string mem) { myMemLoc = mem;}
+    std::string getMemLoc() { return myMemLoc;}
 private:
 	std::string myName;
 	const DataType * myType;
+    std::string myMemLoc;
 };
 
 class VarSymbol : public SemSymbol {

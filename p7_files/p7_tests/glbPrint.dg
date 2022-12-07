@@ -2,11 +2,15 @@ int a;
 int b;
 bool c;
 
-bool print(int a) {
+int print(int a) {
     output a;
-    return true;
+    return a+1;
 }
 
 int main() {
-    fn (int)->bool funt;
+    int b;
+    fn (int)->int funct;
+    funct = print;
+    b = funct(1); 
+    output b;
 }

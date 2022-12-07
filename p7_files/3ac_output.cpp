@@ -127,7 +127,7 @@ static void argsTo3AC(Procedure * proc, std::list<ExpNode *> * args){
 
 Opd * CallExpNode::flatten(Procedure * proc){
 	argsTo3AC(proc, myArgs);
-	Quad * callQuad = new CallQuad(myID->getSymbol(), proc->getFormals().size());
+	Quad * callQuad = new CallQuad(myID->getSymbol(), myArgs->size());
 	proc->addQuad(callQuad);
 
 	SemSymbol * idSym = myID->getSymbol();

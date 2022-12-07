@@ -12,7 +12,7 @@ Procedure::Procedure(IRProgram * prog, std::string name)
 	if (myName.compare("main") == 0){
 		enter->addLabel(new Label("main"));
 	} else {
-		enter->addLabel(new Label("fun_" + myName));
+		enter->addLabel(new Label("gbl_" + myName));
 	}
 	leaveLabel = myProg->makeLabel();
 	leave->addLabel(leaveLabel);
