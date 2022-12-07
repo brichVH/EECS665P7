@@ -1,20 +1,15 @@
 int a;
-bool b;
-
-void print(int a, bool b) {
-    output a;
-    output "\n";
-    output b;
-    output "\n";
-}
+int b;
+int d;
+int e;
+bool c;
 
 int main() {
     a=1;
-    b=true;
-    output a;
+    b=2;
+    c = (a < b);
+    output c;
+    c = (a > b);
+    output c;
     output "\n";
-    output b;
-    output "\n";
-    output "Hi there\n";
-    print(a, b);
 }

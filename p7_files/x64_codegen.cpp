@@ -111,11 +111,133 @@ void Quad::codegenLabels(std::ostream& out){
 }
 
 void BinOpQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	src1->genLoadVal(out,A);
+    src2->genLoadVal(out,B);
+
+    bool isBool = false;
+    std::string opstring;
+    std::string boolstring;
+    
+    switch(opr){
+	case ADD64: 
+        opstring = "addq ";
+        break;
+	case SUB64: 
+        opstring ="subq ";
+        break;
+	case DIV64: 
+        opstring = "idivq ";
+        break;
+	case MULT64: 
+        opstring = "imul ";
+        break;
+	case OR64:
+        opstring = "orq ";
+        break;
+	case AND64:
+        opstring = "andq ";
+        break;
+	case EQ64:
+        isBool = true; 
+        boolstring = "sete ";
+        opstring = "cmpq ";
+        break;
+	case NEQ64:
+        boolstring = "setne ";
+        isBool = true; 
+        opstring = "cmpq ";
+        break;
+	case LT64:
+        boolstring = "setne "; 
+        isBool = true; 
+        opstring = "cmpq ";
+        break;
+	case GT64: 
+        boolstring = "setg ";
+        isBool = true; 
+        opstring = "cmpq ";
+        break;
+	case LTE64: 
+        boolstring = "setl ";
+        isBool = true; 
+        opstring = "cmpq ";
+        break;
+	case GTE64: 
+        boolstring = "setge ";
+        isBool = true; 
+        opstring = "cmpq ";
+        break;
+	case ADD8: 
+        opstring = "addb ";
+        break;
+	case SUB8: 
+        opstring = "subb ";
+        break;
+	case DIV8: 
+        opstring = "divb ";
+        break;
+	case MULT8: 
+        opstring = "multb ";
+        break;
+	case OR8: 
+        opstring = "orb ";
+        break;
+	case AND8: 
+        opstring = "andb ";
+        break;
+	case EQ8: 
+        opstring = "cmpb ";
+        break;
+	case NEQ8: 
+        opstring = "cmpb ";
+        break;
+	case LT8: 
+        opstring = "cmpb ";
+        break;
+	case GT8: 
+        opstring = "cmpb ";
+        break;
+	case LTE8: 
+        opstring = "cmpb ";
+        break;
+	case GTE8: 
+        opstring = "cmpb ";
+        break;
+	}
+
+    if(opstring == "idivq "){
+        out << "movq $0, %rdx\n";
+        out << opstring << "%rbx\n";
+    } else if (isBool){
+        out << opstring << "%rax, %rbx\n";
+        out << boolstring <<  "%bl\n";
+        out << "andq $0x1, %rbx\n"; 
+    } else {
+        out << opstring << "%rax, %rbx\n";
+    }
+
+    dst->genStoreVal(out,B);
 }
 
 void UnaryOpQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	src->genLoadVal(out, A);
+    std::string opString;
+	switch (op){
+	case NEG64:
+		opString = "negq ";
+		break;
+	case NEG8:
+		opString = "negb ";
+		break;
+	case NOT64:
+		opString = "notq ";
+		break;
+	case NOT8:
+		opString = "notb ";
+		break;
+	}
+	out << opString << "%rax \n";
+    dst->genStoreVal(out,A);
 }
 
 void AssignQuad::codegenX64(std::ostream& out){
@@ -206,7 +328,7 @@ void SymOpd::genLoadAddr(std::ostream& out, Register reg) {
 }
 
 void AuxOpd::genLoadVal(std::ostream& out, Register reg){
-	out << getMovOp() << this->getMemoryLoc() << ", " << getReg(reg) << "\n"; 
+	out << getMovOp() << " " << this->getMemoryLoc() << ", " << getReg(reg) << "\n"; 
 }
 
 void AuxOpd::genStoreVal(std::ostream& out, Register reg){
@@ -236,7 +358,7 @@ void AddrOpd::genLoadAddr(std::ostream & out, Register reg){
 }
 
 void LitOpd::genLoadVal(std::ostream & out, Register reg){
-	out << getMovOp() << " $" << val << ", " << RegUtils::reg64(reg) << "\n";
+	out << " " << getMovOp() << " $" << val << ", " << RegUtils::reg64(reg) << "\n";
 }
 
 }
