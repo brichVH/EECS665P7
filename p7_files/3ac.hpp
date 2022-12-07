@@ -419,11 +419,12 @@ private:
 
 class CallQuad : public Quad{
 public:
-	CallQuad(SemSymbol * calleeIn);
+	CallQuad(SemSymbol * calleeIn, int formalSizeIn);
 	std::string repr() override;
 	void codegenX64(std::ostream& out) override;
 private:
 	SemSymbol * callee;
+    int formalSize;
 };
 
 class EnterQuad : public Quad{
@@ -446,7 +447,7 @@ private:
 
 class SetArgQuad : public Quad{
 public:
-	SetArgQuad(size_t indexIn, Opd * opdIn, const DataType * typeIn);
+	SetArgQuad(size_t indexIn, Opd * opdIn, const DataType * typeIn, size_t formalSizeIn);
 	std::string repr() override;
 	void codegenX64(std::ostream& out) override;
 	Opd * getSrc(){ return opd; }
@@ -456,6 +457,7 @@ private:
 	size_t index;
 	Opd * opd;
 	const DataType * type;
+    size_t formalSize;
 };
 
 class GetArgQuad : public Quad{

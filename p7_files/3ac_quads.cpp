@@ -52,7 +52,7 @@ std::string Quad::toString(bool verbose){
 	return res;
 }
 
-CallQuad::CallQuad(SemSymbol * calleeIn) : callee(calleeIn){ }
+CallQuad::CallQuad(SemSymbol * calleeIn, int formalSizeIn) : callee(calleeIn), formalSize(formalSizeIn){ }
 
 std::string CallQuad::repr(){
 	return "call " + callee->getName();
@@ -216,8 +216,8 @@ std::string GetRetQuad::repr(){
 	return res;
 }
 
-SetArgQuad::SetArgQuad(size_t indexIn, Opd * opdIn, const DataType * typeIn)
-: index(indexIn), opd(opdIn), type(typeIn){
+SetArgQuad::SetArgQuad(size_t indexIn, Opd * opdIn, const DataType * typeIn, size_t formalSizeIn)
+: index(indexIn), opd(opdIn), type(typeIn), formalSize(formalSizeIn) {
 }
 
 std::string SetArgQuad::repr(){

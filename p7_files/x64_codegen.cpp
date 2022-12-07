@@ -24,13 +24,12 @@ void IRProgram::datagenX64(std::ostream& out){
         const SemSymbol * sym = globalOpd->getSym();
         memLoc += sym->getName();
         size_t width = sym->getDataType()->getSize();
-        if(width != 0) {
-            out << memLoc << ":";
-        }
+        out << memLoc << ":";
         if(width == 8){
             out << " .quad 0\n";
-
-        } 
+        } else {
+            out << " " << sym->getName() << "\n";
+        }
     }
 
     int count =strings.size()-1;
@@ -58,7 +57,7 @@ void Procedure::allocLocals(){
 	//Allocate space for locals
 	// Iterate over each procedure and codegen it
     int count = 0;
-	for(auto t : temps ){
+    for(auto t : formals ){
         int offset = 24 + (count*8);
         t->setMemoryLoc("-" + to_string(offset) + "(%rbp)");
         count++;
@@ -69,7 +68,7 @@ void Procedure::allocLocals(){
         sym->setMemoryLoc("-" + to_string(offset) + "(%rbp)");
         count++;
     }
-    for(auto t : formals ){
+	for(auto t : temps ){
         int offset = 24 + (count*8);
         t->setMemoryLoc("-" + to_string(offset) + "(%rbp)");
         count++;
@@ -291,6 +290,14 @@ void IntrinsicInputQuad::codegenX64(std::ostream& out){
 
 void CallQuad::codegenX64(std::ostream& out){
 	out << "callq fun_" << callee->getName() << "\n";
+    if(formalSize > 6) {
+        for(int i=0; i<formalSize-6; i++) {
+            out << "popq %r11\n";
+        }
+        if(formalSize % 2 == 1) {
+            out << "popq %r11\n";
+        }
+    }
     //need to pop stack
 }
 
@@ -302,8 +309,14 @@ void EnterQuad::codegenX64(std::ostream& out){
     int count = 0;
     int size = myProc->getFormals().size();
     for(auto formal : myProc->getFormals()) {
+        int stackAlign;
+        if(size %2 ==1) {
+            stackAlign = 8;
+        } else {
+            stackAlign = 0;
+        }
         int offset = 24 + (count*8);
-        int stackOffset = (size - (count+1))*8;
+        int stackOffset = ((size - (count+1))*8) + stackAlign;
         if(count == 0) {
             out << "movq " << formal->getReg(DI) << ", -" << offset << "(%rbp)\n";
         } else if(count == 1) {
@@ -347,13 +360,18 @@ void SetArgQuad::codegenX64(std::ostream& out){
         opd->genLoadVal(out, R9);
     } else {
         //put on the stack
-        opd->genStackPush(out);
+        if(index == formalSize && formalSize % 2 == 1) {
+            opd->genStackPush(out);
+            opd->genStackPush(out);
+        } else {
+            opd->genStackPush(out);
+        }
+        
     }
 }
 
 void GetArgQuad::codegenX64(std::ostream& out){
 	//We don't actually need to do anything here
-    out << "movq " << opd->getMemoryLoc()
 }
 
 void SetRetQuad::codegenX64(std::ostream& out){

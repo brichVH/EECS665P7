@@ -2,12 +2,11 @@ int a;
 int b;
 bool c;
 
-bool func (int in){
-    return in>=10;
+bool print(int a) {
+    output a;
+    return true;
 }
 
 int main() {
-    a = 20;
-    b = -1;
-    output func(a);
+    fn (int)->bool funt;
 }
