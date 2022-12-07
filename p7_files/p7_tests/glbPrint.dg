@@ -1,15 +1,13 @@
 int a;
 int b;
-int d;
-int e;
 bool c;
 
+bool func (int in){
+    return in>=10;
+}
+
 int main() {
-    a=1;
-    b=2;
-    c = (a < b);
-    output c;
-    c = (a > b);
-    output c;
-    output "\n";
+    a = 20;
+    b = -1;
+    output func(a);
 }

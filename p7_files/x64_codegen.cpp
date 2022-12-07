@@ -148,7 +148,7 @@ void BinOpQuad::codegenX64(std::ostream& out){
         opstring = "cmpq ";
         break;
 	case LT64:
-        boolstring = "setne "; 
+        boolstring = "setl "; 
         isBool = true; 
         opstring = "cmpq ";
         break;
@@ -158,7 +158,7 @@ void BinOpQuad::codegenX64(std::ostream& out){
         opstring = "cmpq ";
         break;
 	case LTE64: 
-        boolstring = "setl ";
+        boolstring = "setle ";
         isBool = true; 
         opstring = "cmpq ";
         break;
@@ -209,14 +209,18 @@ void BinOpQuad::codegenX64(std::ostream& out){
         out << "movq $0, %rdx\n";
         out << opstring << "%rbx\n";
     } else if (isBool){
-        out << opstring << "%rax, %rbx\n";
-        out << boolstring <<  "%bl\n";
-        out << "andq $0x1, %rbx\n"; 
+        out << "movq $0, %rcx\n"; 
+        out << opstring << "%rbx, %rax\n";
+        out << boolstring <<  "%cl\n";
+        dst->genStoreVal(out,C);
     } else {
-        out << opstring << "%rax, %rbx\n";
+        out << opstring << "%rbx, %rax\n";
     }
 
-    dst->genStoreVal(out,B);
+    if(!isBool){
+        dst->genStoreVal(out,A);
+        }
+
 }
 
 void UnaryOpQuad::codegenX64(std::ostream& out){
@@ -250,7 +254,9 @@ void GotoQuad::codegenX64(std::ostream& out){
 }
 
 void IfzQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+    cnd->genLoadVal(out, A);
+    out << "cmpq $0, %rax\n";
+	out << "je " << tgt->getName() << "\n";
 }
 
 void NopQuad::codegenX64(std::ostream& out){
@@ -300,14 +306,16 @@ void SetArgQuad::codegenX64(std::ostream& out){
 
 void GetArgQuad::codegenX64(std::ostream& out){
 	//We don't actually need to do anything here
+    out << "movq " << opd->getMemoryLoc()
 }
 
 void SetRetQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	opd->genLoadVal(out, A);
+    out << "retq\n";
 }
 
 void GetRetQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	opd->genStoreVal(out, A);
 }
 
 void LocQuad::codegenX64(std::ostream& out){
@@ -345,7 +353,7 @@ void AddrOpd::genStoreVal(std::ostream& out, Register reg){
 
 void AddrOpd::genLoadVal(std::ostream& out, Register reg){
 	//fix me: worry about size of operand
-    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::reg64(reg) << "\n"; 
+    out << "movq %rdi" << this->getMemoryLoc() << ", " << RegUtils::reg64(reg) << "\n"; 
     TODO(Implement me)
 }
 

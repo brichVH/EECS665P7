@@ -2,10 +2,6 @@
 .globl main
 gbl_a: .quad 0
 gbl_b: .quad 0
-gbl_d: .quad 0
-gbl_e: .quad 0
-gbl_c: .quad 0
-str_0: .asciz "\n"
 .align 8
 .text
 main: #Prologue
@@ -17,38 +13,28 @@ subq $16, %rsp
 #            [a] := 1
  movq $1, %rax
 movq %rax, (gbl_a)
-#            [b] := 2
- movq $2, %rax
+#            [b] := 0
+ movq $0, %rax
 movq %rax, (gbl_b)
-#            [tmp0] := [a] LT64 [b]
+#            [tmp0] := [a] AND64 [b]
 movq (gbl_a), %rax
 movq (gbl_b), %rbx
-cmpq %rax, %rbx
-setne %bl
-andq $0x1, %rbx
+andq %rax, %rbx
 movq %rbx, -24(%rbp)
-#            [c] := [tmp0]
-movq -24(%rbp), %rax
-movq %rax, (gbl_c)
-#            REPORT [c]
-movq (gbl_c), %rdi
+#            IFZ [tmp0] GOTO lbl_1
+ifz -24(%rbp) goto lbl_1
+#            REPORT [a]
+movq (gbl_a), %rdi
 callq printBool
-#            [tmp1] := [a] GT64 [b]
-movq (gbl_a), %rax
-movq (gbl_b), %rbx
-cmpq %rax, %rbx
-setg %bl
-andq $0x1, %rbx
-movq %rbx, -32(%rbp)
-#            [c] := [tmp1]
-movq -32(%rbp), %rax
-movq %rax, (gbl_c)
-#            REPORT [c]
-movq (gbl_c), %rdi
+#            goto lbl_2
+jmp lbl_2
+lbl_1: #lbl_1:      nop
+nop
+#            REPORT [b]
+movq (gbl_b), %rdi
 callq printBool
-#            REPORT str_0
- movq $str_0, %rdi
-callq printString
+lbl_2: #lbl_2:      nop
+nop
 #Fn epilogue main
 lbl_0: addq $16, %rsp
 popq %rbp
