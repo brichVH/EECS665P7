@@ -33,7 +33,7 @@ private:
 };
 
 enum Register{
-	A, B, C, D, DI
+	DI, S, D, C, R8, R9, B, A
 };
 
 class RegUtils{
@@ -41,20 +41,26 @@ public:
 	static std::string rootStr(Register reg){
 		switch(reg){
 			case A: return "a";
+			case S: return "s";
 			case B: return "b";
 			case C: return "c";
 			case D: return "d";
 			case DI: return "di";
+			case R8: return "r8";
+			case R9: return "r9";
 		}
 	}
 
 	static std::string reg64(Register reg){
 		switch(reg){
 			case A: return "%rax";
+			case S: return "%rsi";
 			case B: return "%rbx";
 			case C: return "%rcx";
 			case D: return "%rdx";
 			case DI: return "%rdi";
+			case R8: return "%r8";
+			case R9: return "%r9";
 		}
 		throw new InternalError("no such register");
 	}
@@ -66,6 +72,9 @@ public:
 			case C: return "%cl";
 			case D: return "%dl";
 			case DI: return "%dil";
+			case S: return "%dil";
+			case R8: return "%dil";
+			case R9: return "%dil";
 		}
 		throw new InternalError("no such register");
 	}
@@ -81,6 +90,7 @@ public:
 	virtual void genStoreAddr(std::ostream& out, Register reg) = 0;
 	virtual void genLoadVal(std::ostream& out, Register reg) = 0;
 	virtual void genStoreVal(std::ostream& out, Register reg) = 0;
+	virtual void genStackPush(std::ostream& out) =0;
 	static size_t width(const DataType * type){
 		if (const BasicType * basic = type->asBasic()){
 			return basic->getSize();
@@ -125,6 +135,7 @@ public:
 	virtual void genLoadVal(std::ostream& out, Register reg) override;
 	virtual void genStoreVal(std::ostream& out, Register reg) override;
 	virtual void genLoadAddr(std::ostream& out, Register reg) override;
+	virtual void genStackPush(std::ostream& out) override;
 	virtual void genStoreAddr(std::ostream& out, Register reg) override{
 		throw new InternalError("Cannot change the addr of a symOpd");
 	}
@@ -184,6 +195,8 @@ public:
 	virtual std::string getMemoryLoc() override{
 		throw InternalError("Tried to get location of a constant");
 	}
+
+	void genStackPush(std::ostream& out);
 private:
 	std::string val;
 };
@@ -206,6 +219,9 @@ public:
 	virtual void genLoadAddr(std::ostream& out, Register reg) override;
 	virtual void genStoreAddr(std::ostream& out, Register reg) override{
 		throw new InternalError("Cannot change the addr of a auxOpd");
+	}
+	virtual void genStackPush(std::ostream& out) override {
+		throw new InternalError("Cannot push a temp");
 	}
 
 	virtual void setMemoryLoc(std::string loc){
@@ -234,6 +250,9 @@ public:
 	virtual void genStoreAddr(std::ostream& out, Register reg) override;
 	virtual void genLoadVal(std::ostream& out, Register reg) override;
 	virtual void genStoreVal(std::ostream& out, Register reg) override;
+	virtual void genStackPush(std::ostream& out) override {
+		throw new InternalError("Cannot push a addr");
+	}
 
 	virtual void setMemoryLoc(std::string loc){
 		myLoc = loc;
