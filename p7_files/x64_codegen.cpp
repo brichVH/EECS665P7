@@ -258,7 +258,8 @@ void NopQuad::codegenX64(std::ostream& out){
 }
 
 void IntrinsicMayhemQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	out << "callq mayhem\n";
+    myDst->genStoreVal(out, A);
 }
 
 void IntrinsicOutputQuad::codegenX64(std::ostream& out){
@@ -273,11 +274,18 @@ void IntrinsicOutputQuad::codegenX64(std::ostream& out){
 }
 
 void IntrinsicInputQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	myArg->genLoadVal(out, DI);
+	if (myType->isBool()){
+		out << "callq getBool\n";
+	} else {
+		out << "callq getInt\n";
+	}
+    myArg->genStoreVal(out, A);
 }
 
 void CallQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	out << "callq fun_" << callee->getName() << "\n";
+    //need to pop stack
 }
 
 void EnterQuad::codegenX64(std::ostream& out){
@@ -285,17 +293,56 @@ void EnterQuad::codegenX64(std::ostream& out){
 	out << "pushq %rbp\nmovq %rsp, %rbp\naddq $16, %rbp\n";
     int numLoc = myProc->arSize();
     out << "subq $" << numLoc << ", %rsp\n";
+    int count = 0;
+    int size = myProc->getFormals().size();
+    for(auto formal : myProc->getFormals()) {
+        int offset = 24 + (count*8);
+        int stackOffset = (size - (count+1))*8;
+        if(count == 0) {
+            out << "movq " << formal->getReg(DI) << ", -" << offset << "(%rbp)\n";
+        } else if(count == 1) {
+            out << "movq " << formal->getReg(S) << ", -" << offset << "(%rbp)\n";
+        } else if(count == 2) {
+            out << "movq " << formal->getReg(D) << ", -" << offset << "(%rbp)\n";
+        } else if(count == 3) {
+            out << "movq " << formal->getReg(C) << ", -" << offset << "(%rbp)\n";
+        } else if(count == 4) {
+            out << "movq " << formal->getReg(R8) << ", -" << offset << "(%rbp)\n";
+        } else if(count == 5) {
+            out << "movq " << formal->getReg(R9) << ", -" << offset << "(%rbp)\n";
+        } else {
+            //Move Stack to new Stack
+            out << "movq " << stackOffset << "(%rbp), %rax\n";
+            out << "movq %rax, -" << offset << "(%rbp)\n";
+        }
+        count++;
+    }
 }
 
 void LeaveQuad::codegenX64(std::ostream& out){
     int numLoc = myProc->arSize();
     out << "addq $" << numLoc << ", %rsp\n";
     out << "popq %rbp\n";
-    out << "retq\n";
+    out << "retq\n\n";
 }
 
 void SetArgQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+    if (index == 1) {
+        opd->genLoadVal(out, DI);
+    } else if(index == 2) {
+        opd->genLoadVal(out, S);
+    } else if(index == 3) {
+        opd->genLoadVal(out, D);
+    } else if(index == 4) {
+        opd->genLoadVal(out, C);
+    } else if(index == 5) {
+        opd->genLoadVal(out, R8);
+    } else if(index == 6) {
+        opd->genLoadVal(out, R9);
+    } else {
+        //put on the stack
+        opd->genStackPush(out);
+    }
 }
 
 void GetArgQuad::codegenX64(std::ostream& out){
@@ -303,28 +350,33 @@ void GetArgQuad::codegenX64(std::ostream& out){
 }
 
 void SetRetQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	out << "movq " << opd->getMemoryLoc() << ",  %rax\n";
 }
 
 void GetRetQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	out << "movq %rax, " << opd->getMemoryLoc() << "\n";
 }
 
 void LocQuad::codegenX64(std::ostream& out){
-	TODO(Implement me)
+	TODO(Implement Me);
 }
 
 void SymOpd::genLoadVal(std::ostream& out, Register reg){
     //FIX ME: Worry about width of operand later
-    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::reg64(reg) << "\n"; 
+    out << getMovOp() << " " << this->getMemoryLoc() << ", " << getReg(reg) << "\n"; 
 }
 
 void SymOpd::genStoreVal(std::ostream& out, Register reg){
-	out << getMovOp() << " " << RegUtils::reg64(reg) << ", " << this->getMemoryLoc() << "\n";
+	out << getMovOp() << " " << getReg(reg) << ", " << this->getMemoryLoc() << "\n";
 }
 
 void SymOpd::genLoadAddr(std::ostream& out, Register reg) {
 	TODO(Implement me if necessary)
+}
+
+void SymOpd::genStackPush(std::ostream& out) {
+    out << "movq " << this->getMemoryLoc() << ", %rax";
+    out << "pushq %rax\n";
 }
 
 void AuxOpd::genLoadVal(std::ostream& out, Register reg){
@@ -344,8 +396,6 @@ void AddrOpd::genStoreVal(std::ostream& out, Register reg){
 }
 
 void AddrOpd::genLoadVal(std::ostream& out, Register reg){
-	//fix me: worry about size of operand
-    out << "movq " << this->getMemoryLoc() << ", " << RegUtils::reg64(reg) << "\n"; 
     TODO(Implement me)
 }
 
@@ -358,7 +408,11 @@ void AddrOpd::genLoadAddr(std::ostream & out, Register reg){
 }
 
 void LitOpd::genLoadVal(std::ostream & out, Register reg){
-	out << " " << getMovOp() << " $" << val << ", " << RegUtils::reg64(reg) << "\n";
+	out << getMovOp() << " $" << val << ", " << RegUtils::reg64(reg) << "\n";
+}
+
+void LitOpd::genStackPush(std::ostream& out) {
+    out << "pushq $" << val << "\n";
 }
 
 }
