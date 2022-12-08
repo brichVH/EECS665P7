@@ -22,6 +22,8 @@ void IRProgram::datagenX64(std::ostream& out){
 	
     out << ".data\n";
     out << ".globl main\n";
+    std::cout << "Size: " << globals.size() << '\n';
+    std::cout << "Size: " << strings.size() << '\n';
     for(auto g : globals){
         SymOpd * globalOpd = g.second;
         std::string memLoc = "gbl_" ;
@@ -38,8 +40,9 @@ void IRProgram::datagenX64(std::ostream& out){
 
     int count =strings.size()-1;
     for (auto s: strings) {
+        LitOpd* litOpd = s.first;
         std::string stringVal = s.second;
-        std::string memloc = "str_" + to_string(count);
+        std::string memloc = "str_" + to_string(litOpd->getIndex());
         out << memloc << ": .asciz " << stringVal << "\n";
         count--;
     }

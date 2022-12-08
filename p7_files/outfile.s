@@ -1,41 +1,184 @@
 .data
 .globl main
-gbl_a: .quad 0
-gbl_b: .quad 0
+str_8: .asciz "\n"
+str_7: .asciz "\nfn ptrs:"
+str_6: .asciz "\nshould be 11: "
+str_5: .asciz "\nshould be 5: "
+str_4: .asciz "\nshould be 30: "
+str_3: .asciz "\nshould be false: "
+str_2: .asciz "\nshould be true: "
+str_1: .asciz "\nshould be false: "
+str_0: .asciz "\nshould be true: "
 .align 8
 .text
-main: #Prologue
+gbl_print: #Prologue
 pushq %rbp
 movq %rsp, %rbp
 addq $16, %rbp
 subq $16, %rsp
-#Fn body main
-#            [a] := 1
- movq $1, %rax
-movq %rax, (gbl_a)
-#            [b] := 0
- movq $0, %rax
-movq %rax, (gbl_b)
-#            [tmp0] := [a] AND64 [b]
-movq (gbl_a), %rax
-movq (gbl_b), %rbx
-andq %rax, %rbx
-movq %rbx, -24(%rbp)
-#            IFZ [tmp0] GOTO lbl_1
-ifz -24(%rbp) goto lbl_1
+movq %rdi, -24(%rbp)
+#Fn body print
+#            getarg 1 [a]
 #            REPORT [a]
-movq (gbl_a), %rdi
-callq printBool
-#            goto lbl_2
-jmp lbl_2
-lbl_1: #lbl_1:      nop
-nop
-#            REPORT [b]
-movq (gbl_b), %rdi
-callq printBool
-lbl_2: #lbl_2:      nop
-nop
-#Fn epilogue main
+movq -24(%rbp), %rdi
+callq printInt
+#            [tmp0] := [a] ADD64 1
+movq -24(%rbp), %rax
+movq $1, %rbx
+addq %rbx, %rax
+movq %rax, -32(%rbp)
+#            setret [tmp0]
+movq -32(%rbp), %rax
+#            goto lbl_0
+jmp lbl_0
+#Fn epilogue print
 lbl_0: addq $16, %rsp
 popq %rbp
 retq
+
+main: #Prologue
+pushq %rbp
+movq %rsp, %rbp
+addq $16, %rbp
+subq $112, %rsp
+#Fn body main
+#            [a] := 5
+movq $5, %rax
+movq %rax, -32(%rbp)
+#            [b] := 6
+movq $6, %rax
+movq %rax, -24(%rbp)
+#            REPORT str_0
+movq $str_0, %rdi
+callq printString
+#            [tmp0] := [a] LT64 [b]
+movq -32(%rbp), %rax
+movq -24(%rbp), %rbx
+movq $0, %rcx
+cmpq %rbx, %rax
+setl %cl
+movq %rcx, -64(%rbp)
+#            [c] := [tmp0]
+movq -64(%rbp), %rax
+movq %rax, -40(%rbp)
+#            REPORT [c]
+movq -40(%rbp), %rdi
+callq printBool
+#            REPORT str_1
+movq $str_1, %rdi
+callq printString
+#            [tmp1] := [a] GT64 [b]
+movq -32(%rbp), %rax
+movq -24(%rbp), %rbx
+movq $0, %rcx
+cmpq %rbx, %rax
+setg %cl
+movq %rcx, -72(%rbp)
+#            [c] := [tmp1]
+movq -72(%rbp), %rax
+movq %rax, -40(%rbp)
+#            REPORT [c]
+movq -40(%rbp), %rdi
+callq printBool
+#            REPORT str_2
+movq $str_2, %rdi
+callq printString
+#            [tmp2] := [a] LTE64 [b]
+movq -32(%rbp), %rax
+movq -24(%rbp), %rbx
+movq $0, %rcx
+cmpq %rbx, %rax
+setle %cl
+movq %rcx, -80(%rbp)
+#            [c] := [tmp2]
+movq -80(%rbp), %rax
+movq %rax, -40(%rbp)
+#            REPORT [c]
+movq -40(%rbp), %rdi
+callq printBool
+#            REPORT str_3
+movq $str_3, %rdi
+callq printString
+#            [tmp3] := [a] GTE64 [b]
+movq -32(%rbp), %rax
+movq -24(%rbp), %rbx
+movq $0, %rcx
+cmpq %rbx, %rax
+setge %cl
+movq %rcx, -88(%rbp)
+#            [c] := [tmp3]
+movq -88(%rbp), %rax
+movq %rax, -40(%rbp)
+#            REPORT [c]
+movq -40(%rbp), %rdi
+callq printBool
+#            REPORT str_4
+movq $str_4, %rdi
+callq printString
+#            [tmp4] := [a] MULT64 [b]
+movq -32(%rbp), %rax
+movq -24(%rbp), %rbx
+imul %rbx, %rax
+movq %rax, -96(%rbp)
+#            [d] := [tmp4]
+movq -96(%rbp), %rax
+movq %rax, -48(%rbp)
+#            REPORT [d]
+movq -48(%rbp), %rdi
+callq printInt
+#            REPORT str_5
+movq $str_5, %rdi
+callq printString
+#            [tmp5] := [d] DIV64 [b]
+movq -48(%rbp), %rax
+movq -24(%rbp), %rbx
+movq $0, %rdx
+idivq %rbx
+movq %rax, -104(%rbp)
+#            [d] := [tmp5]
+movq -104(%rbp), %rax
+movq %rax, -48(%rbp)
+#            REPORT [d]
+movq -48(%rbp), %rdi
+callq printInt
+#            REPORT str_6
+movq $str_6, %rdi
+callq printString
+#            [tmp6] := [a] ADD64 [b]
+movq -32(%rbp), %rax
+movq -24(%rbp), %rbx
+addq %rbx, %rax
+movq %rax, -112(%rbp)
+#            [d] := [tmp6]
+movq -112(%rbp), %rax
+movq %rax, -48(%rbp)
+#            REPORT [d]
+movq -48(%rbp), %rdi
+callq printInt
+#            REPORT str_7
+movq $str_7, %rdi
+callq printString
+#            [funct] := [print]
+movq $gbl_print, %rax
+movq %rax, -56(%rbp)
+#            setarg 1 1
+movq $1, %rdi
+#            call funct
+movq -56(%rbp), %rax
+callq *%rax
+#            getret [tmp7]
+movq %rax, -120(%rbp)
+#            [b] := [tmp7]
+movq -120(%rbp), %rax
+movq %rax, -24(%rbp)
+#            REPORT [b]
+movq -24(%rbp), %rdi
+callq printInt
+#            REPORT str_8
+movq $str_8, %rdi
+callq printString
+#Fn epilogue main
+lbl_1: addq $112, %rsp
+popq %rbp
+retq
+

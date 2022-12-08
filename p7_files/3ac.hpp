@@ -197,8 +197,13 @@ public:
 	}
 
 	void genStackPush(std::ostream& out);
+
+    void setIndex(int indexIn) { index = indexIn;}
+
+    int getIndex() { return index;}
 private:
 	std::string val;
+    int index;
 };
 
 class AuxOpd : public Opd{
